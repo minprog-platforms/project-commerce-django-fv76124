@@ -7,19 +7,17 @@ from django.db import models
 class User(AbstractUser):
     pass
 
+class Bid(models.Model):
+    bid = models.IntegerField(default=0)
+    user = models.ForeignKey(User,on_delete=models.CASCADE, blank=True, null=True, related_name="userBid")
+
 class AuctionListing(models.Model):
     title = models.CharField(max_length=30)
     description = models.CharField(max_length=100)
     imageurl = models.CharField(max_length=300)
-    startingbid = models.FloatField()
+    startingbid = models.ForeignKey(Bid, on_delete=models.CASCADE, blank=True, null=True, related_name="startingbid")
     isActive = models.BooleanField(default=True)
     owner = models.ForeignKey(User,on_delete=models.CASCADE, blank=True, null=True, related_name="user")
 
     def __str__(self):
         return (f"{self.title} {self.description} {self.startingbid}")
-
-class Bids():
-    pass
-
-class Comments():
-    pass

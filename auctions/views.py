@@ -4,7 +4,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 
-from .models import User, AuctionListing
+from .models import User, AuctionListing, Bid
 
 def index(request):
     return render(request, "auctions/index.html", {
@@ -64,9 +64,10 @@ def register(request):
     
 def activelisting(request, id):
     listingdata = AuctionListing.objects.get(pk=id)
+    isOwner = request.user.username == listingdata.owner.username
     return render(request, "auctions/activelisting.html", {
-        # "title": AuctionListing.title
-        "listing": listingdata
+        "listing": listingdata,
+        "isOwner": isOwner,
     })
 
 def addlisting(request):
@@ -79,26 +80,46 @@ def addlisting(request):
         startingbid = request.POST["startingbid"]
         currentuser = request.user
         
+        bid = Bid(bid=int(startingbid), user=currentuser)
+        bid.save()
+        
         NewListing = AuctionListing(
             title=title,
             description=description,
             imageurl=imageurl,
-            startingbid=startingbid,
+            startingbid=bid,
             owner=currentuser    
         )
         NewListing.save()
         
         return HttpResponseRedirect(reverse("index"))
             
-def bid(request):
-    pass
+def bid(request, id):
+    addbid = request.POST["bid"]
+    listingdata = AuctionListing.objects.get(pk=id)
+    if int(addbid) > listingdata.startingbid.bid:
+        newbid = Bid(user=request.user, bid=int(addbid))
+        newbid.save()
+        listingdata.startingbid = newbid
+        listingdata.save()
+        return render(request, "auctions/activelisting.html", {
+            "listing": listingdata
+        })
+    else:
+        return render(request, "auctions/error.html", {
+            "error": "Your bid is too low"
+            })
 
-    # biddings = AuctionListing.startingbid
-    
-    # if new_bid > biddings:
-    #     biddings = new_bid
+def closedlisting(request, id):
+    listingdata = AuctionListing.objects.get(pk=id)
+    listingdata.isActive = False
+    listingdata.save()
+    isOwner = request.user.username == listingdata.owner.username
+    return render(request, "auctions/activelisting.html", {
+        "listing": listingdata,
+        "isOwner": isOwner,
+    })
         
-
         
         
     

@@ -1,18 +1,39 @@
 {% extends "auctions/layout.html" %}
 
 {% block body %}
- <h2>Listing: {{ listing.title }}</h2>
- <img src ="{{ listing.imageurl }}" height="300px"></a><br>
- {{ listing.description}} <br>
- ${{ listing.startingbid}} <br>
-    <form action="/bid" method="post">
+
+  {% if user.is_authenticated and listing.isActive %}
+    {% if isOwner %}
+  <form action="{% url 'closedlisting' id=listing.id %}" method="POST">
+    {% csrf_token %}
+      <button type="submit" class="btn btn-warning">Close listing</button>
+    </form> 
+    {% endif %}
+  {% endif %}
+
+  <h2>Listing: {{ listing.title }}</h2>
+  <img src ="{{ listing.imageurl }}" height="300px"></a><br>
+  {{ listing.description}} <br>
+  ${{ listing.startingbid.bid}} <br>
+
+  {% if user.is_authenticated and listing.isActive %}
+    <form action="{% url 'bid' id=listing.id %}" method="POST">
+      {% csrf_token %}
         <label for="bid">Place bid:</label><br>
         <input type="number" placeholder="bid" id="bid" name="bid"><br>
-        <button type="submit" name="bid" id="bid">Place a bid:</button>
+        <button type="submit" class="btn btn-warning">Place a bid:</button>
       </form>  
+  {% endif%}
+
+  {% if listing.isActive == False %}
+      <h2> this listing is closed! </h2>
+      <p> this listing is won by {{ user }} for ${{ listing.startingbid.bid }}</p> 
+  {% endif%}
+
 
 <br>
   Details:
-  <li> placed by: {{ user }} </li>
+  <li> Listing placed by: {{ listing.owner }} </li>
+  <li> Newest bid placed by: {{ user }} </li>
 
 {% endblock %}
